@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "dotenv": "^5.0.0",
-    "express": "^4.16.2"
+    "express": "^4.16.2",
+    "normalize-port": "^1.0.0"
   }
 }
