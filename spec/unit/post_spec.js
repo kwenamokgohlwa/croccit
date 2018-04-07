@@ -52,7 +52,7 @@ describe("Post", () => {
 
     it("should not create a post with missing title, body, or assigned topic", (done) => {
       Post.create({
-        title: "pros of Cryosleep during the long journey"
+        title: "Pros of Cryosleep during the long journey"
       })
       .then((post) => {
         done();
