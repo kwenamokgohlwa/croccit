@@ -40,7 +40,7 @@ module.exports = {
         res.redirect("/");
       }
     })
-  }
+  },
 
   signOut(req, res, next){
     req.logout();
