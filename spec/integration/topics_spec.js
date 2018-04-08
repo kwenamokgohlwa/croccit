@@ -60,6 +60,14 @@ describe("routes : topics", () => {
       }
     };
 
+    const options2 = {
+      url: `${base}create`,
+      form: {
+        title: "a",
+        description: "b"
+      }
+    };
+
     it("should create a new topic and redirect", (done) => {
       request.post(options, (err, res, body) => {
         Topic.findOne({where: {title: "blink-182 songs"}})
@@ -75,6 +83,23 @@ describe("routes : topics", () => {
         });
       });
     });
+
+    it("should not create a new topic that fails validations", (done) => {
+      request.post(options2,
+        (err, res, body) => {
+          Topic.findOne({where: {title: "a"}})
+          .then((topic) => {
+              expect(topic).toBeNull();
+              done();
+          })
+          .catch((err) => {
+            console.log(err);
+            done();
+          });
+        }
+      );
+    });
+
   });
 
   describe("GET /topics/:id", () => {
