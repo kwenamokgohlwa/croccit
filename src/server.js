@@ -21,4 +21,5 @@ function normalizePort(val) {
 
 server.on("listening", () => {
   console.log(`server is listening for requests on port ${server.address().port}`);
+  console.log(process.env.cookieSecret);
 });
