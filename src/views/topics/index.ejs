@@ -4,11 +4,11 @@
     <% include ../static/partials/head.ejs %>
   </head>
   <body>
+    <% include ../static/partials/navbar.ejs %>
+
     <main class="container">
 
       <% include ../static/partials/messages.ejs %>
-
-      <% include ../static/partials/navbar.ejs %>
 
       <h1>Topics</h1>
 
@@ -18,13 +18,13 @@
       <% } %>
 
       <ul class="list-group">
-<!-- #1 -->
+
         <% topics.forEach((topic) => { %>
-<!-- #2 -->
           <li class="list-group-item">
             <a href="/topics/<%= topic.id %>"> <%= topic.title %> </a>
           </li>
         <% }) %>
+
       </ul>
 
 
