@@ -47,7 +47,7 @@ module.exports = {
     } else {
       return next();
     }
-  }
+  },
 
   validateComments(req, res, next) {
     if(req.method === "POST") {
