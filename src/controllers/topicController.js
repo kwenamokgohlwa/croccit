@@ -1,5 +1,5 @@
 const topicQueries = require("../db/queries.topics.js");
-const Authorizer = require("../policies/topic");
+const Authorizer = require("../policies/topic.js");
 
 module.exports = {
   index(req, res, next){

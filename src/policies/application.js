@@ -13,6 +13,10 @@ module.exports = class ApplicationPolicy {
     return this.user && this.user.role == "admin";
   }
 
+  _isMember() {
+    return this.user;
+  }
+
   new() {
     return this.user != null;
   }
@@ -37,5 +41,5 @@ module.exports = class ApplicationPolicy {
   destroy() {
     return this.update();
   }
-  
+
 }

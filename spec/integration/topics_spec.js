@@ -32,7 +32,10 @@ describe("routes : topics", () => {
       request.get({         // mock authentication
         url: "http://localhost:3000/auth/fake",
         form: {
-          role: "admin"     // mock authenticate as admin user
+          email: "kwena@mokgohlwa.com"
+          password: "1234567"
+          role: "admin"
+          userId: "1"    // mock authenticate as admin user
         }
       });
       done();
@@ -73,20 +76,18 @@ describe("routes : topics", () => {
       };
 
       it("should create a new topic and redirect", (done) => {
-        request.post(options,
-          (err, res, body) => {
-            Topic.findOne({where: {title: "blink-182 songs"}})
-            .then((topic) => {
-              expect(topic.title).toBe("blink-182 songs");
-              expect(topic.description).toBe("What's your favorite blink-182 song?");
-              done();
-            })
-            .catch((err) => {
-              console.log(err);
-              done();
-            });
-          }
-        );
+        request.post(options, (err, res, body) => {
+          Topic.findOne({where: {title: "blink-182 songs"}})
+          .then((topic) => {
+            expect(topic.title).toBe("blink-182 songs");
+            expect(topic.description).toBe("What's your favorite blink-182 song?");
+            done();
+          })
+          .catch((err) => {
+            console.log(err);
+            done();
+          });
+        });
       });
     });
 
@@ -172,7 +173,10 @@ describe("routes : topics", () => {
       request.get({
         url: "http://localhost:3000/auth/fake",
         form: {
+          email: "kwena@mokgohlwa.com"
+          password: "1234567"
           role: "member"
+          userId: "1"    // mock authenticate as member user
         }
       });
       done();
