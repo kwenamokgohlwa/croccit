@@ -24,58 +24,48 @@ describe("routes : posts", () => {
 
          Topic.create({
            title: "Winter Games",
-           description: "Post your Winter Games stories.",
-           posts: [{
-             title: "Snowball Fighting",
-             body: "So much snow!",
-             userId: this.user.id
-           }]
-         }, {
-           include: {
-            model: Post,
-            as: "posts"
-           }
+           description: "Post your Winter Games stories."
          })
          .then((topic) => {
            this.topic = topic;
-           this.post = topic.posts[0];
-           done();
-         })
-       })
-     });
 
+           Post.create({
+             title: "Snowball Fighting",
+             body: "So much snow!",
+             userId: this.user.id,
+             topicId: this.topic.id
+           })
+           .then((post) => {
+             this.post = post;
+             done();
+           })
+           .catch((err) => {
+             console.log(err);
+             done();
+           });
+         });
+       });
+     });
    });
 
    describe("admin user performing CRUD actions for Post", () => {
 
-     beforeEach((done) => {  // before each suite in admin context
-       request.get({         // mock authentication
+     beforeEach((done) => {    // before each suite in this context
+       request.get({           // mock authentication
          url: "http://localhost:3000/auth/fake",
          form: {
-           email: "kwena@mokgohlwa.com"
-           password: "1234567"
-           role: "admin"
-           userId: "1"    // mock authenticate as admin user
+           userId: 0 // flag to indicate mock auth to destroy any session
          }
-       });
-       done();
-     });
-
-     describe("GET /topics/:topicId/posts/new", () => {
-
-       it("should render a new post form", (done) => {
-         request.get(`${base}/${this.topic.id}/posts/new`, (err, res, body) => {
-           expect(err).toBeNull();
-           expect(body).toContain("New Post");
+       },
+         (err, res, body) => {
            done();
-         });
-       });
-
+         }
+       );
      });
 
      describe("POST /topics/:topicId/posts/create", () => {
 
-      it("should create a new post and redirect", (done) => {
+      it("should not create a new post and redirect", (done) => {
          const options = {
            url: `${base}/${this.topic.id}/posts/create`,
            form: {
@@ -83,13 +73,11 @@ describe("routes : posts", () => {
              body: "Without a doubt my favoriting things to do besides watching paint dry!"
            }
          };
+
          request.post(options, (err, res, body) => {
              Post.findOne({where: {title: "Watching snow melt"}})
              .then((post) => {
-               expect(post).not.toBeNull();
-               expect(post.title).toBe("Watching snow melt");
-               expect(post.body).toBe("Without a doubt my favoriting things to do besides watching paint dry!");
-               expect(post.topicId).not.toBeNull();
+               expect(post).toBeNull();
                done();
              })
              .catch((err) => {
@@ -137,78 +125,58 @@ describe("routes : posts", () => {
 
     });
 
-    describe("POST /topics/:topicId/posts/:id/destroy", () => {
+    describe("POST /topics/:topicId/posts/:id/edit", () => {
 
-       it("should delete the post with the associated ID", (done) => {
-         expect(this.post.id).toBe(1);
+      it("should not edit the post", (done) => {
+        const options = {
+          url: `${base}/${this.topic.id}/posts/create`,
+          form: {
+            title: "Watching snow melt",
+            body: "Without a doubt my favoriting things to do besides watching paint dry!"
+          }
+        };
 
-         request.post(`${base}/${this.topic.id}/posts/${this.post.id}/destroy`, (err, res, body) => {
-
-           Post.findById(1)
-           .then((post) => {
-             expect(err).toBeNull();
-             expect(post).toBeNull();
-             done();
-           })
-         });
-
-       });
-
-     });
-
-     describe("GET /topics/:topicId/posts/:id/edit", () => {
-
-       it("should render a view with an edit post form", (done) => {
-         request.get(`${base}/${this.topic.id}/posts/${this.post.id}/edit`, (err, res, body) => {
-           expect(err).toBeNull();
-           expect(body).toContain("Edit Post");
-           expect(body).toContain("Snowball Fighting");
-           done();
-         });
-       });
-
-     });
-
-     describe("POST /topics/:topicId/posts/:id/update", () => {
-
-       it("should return a status code 302", (done) => {
-         request.post({
-           url: `${base}/${this.topic.id}/posts/${this.post.id}/update`,
-           form: {
-             title: "Snowman Building Competition",
-             body: "I love watching them melt slowly."
-           }
-         }, (err, res, body) => {
-           expect(res.statusCode).toBe(302);
-           done();
-         });
-       });
-
-       it("should update the post with the given values", (done) => {
-           const options = {
-             url: `${base}/${this.topic.id}/posts/${this.post.id}/update`,
-             form: {
-               title: "Snowman Building Competition",
-               body: "So much snow!"
-             }
-           };
-           request.post(options, (err, res, body) => {
-
-             expect(err).toBeNull();
-
-             Post.findOne({
-               where: {id: this.post.id}
-             })
-             .then((post) => {
-               expect(post.title).toBe("Snowman Building Competition");
-               done();
-             });
-           });
-       });
-
+        request.post(options, (err, res, body) => {
+            Post.findOne({where: {title: "Watching snow melt"}})
+            .then((post) => {
+                expect(post).toBeNull();
+                done();
+            })
+            .catch((err) => {
+              console.log(err);
+              done();
+            });
+          }
+        );
       });
 
     });
+
+    describe("POST /topics/:topicId/posts/:id/destroy", () => {
+
+       it("should not delete the post", (done) => {
+         Post.all()
+         .then((posts) => {
+           const postCountBeforeDelete = posts.length;
+
+           expect(postCountBeforeDelete).toBe(1);
+
+           request.post(
+             `${base}${this.topic.id}/posts/${this.post.id}/destroy`,
+             (err, res, body) => {
+             Post.all()
+             .then((posts) => {
+               expect(err).toBeNull();
+               expect(posts.length).toBe(postCountBeforeDelete);
+               done();
+             });
+           });
+         });
+       });
+
+     });
+
+   }); //end of guest context
 
     describe("member user performing CRUD actions for Post", () => {
 
@@ -216,10 +184,8 @@ describe("routes : posts", () => {
         request.get({
           url: "http://localhost:3000/auth/fake",
           form: {
-            email: "kwena@mokgohlwa.com"
-            password: "1234567"
-            role: "member"
-            userId: "1"    // mock authenticate as member user
+            role: "member",
+            userId: this.user.id  // mock authenticate as member user
           }
         });
         done();
@@ -368,10 +334,10 @@ describe("routes : posts", () => {
                 done();
               });
             });
+          });
+
         });
 
-       });
-
-     });
+      });
 
 });

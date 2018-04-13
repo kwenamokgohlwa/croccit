@@ -10,7 +10,6 @@
 
       <% include ../static/partials/messages.ejs %>
 
-
       <div style="display: flex; align-items:center;">
         <% if(currentUser) { %>
           <% include ../votes/voting.ejs %>
@@ -18,14 +17,13 @@
         <h1><%= post.title %></h1>
      </div>
 
-      <% if(currentUser.id == post.userId || currentUser.isAdmin()) { %>
+      <% if(currentUser && (currentUser.id == post.userId || currentUser.isAdmin())) { %>
       <a href="/topics/<%= post.topicId %>/posts/<%= post.id %>/edit" class="btn btn-warning">Edit</a>
         <form style="display:initial" action="/topics/<%= post.topicId %>/posts/<%= post.id %>/destroy" method="post">
           <button type="submit" class="btn btn-danger">Delete</button>
         </form>
       <% } %>
       <p><%= post.body %></p>
-
 
       <section id="comment-form">
 

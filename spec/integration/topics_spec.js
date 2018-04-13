@@ -4,26 +4,38 @@ const base = "http://localhost:3000/topics/";
 
 const sequelize = require('../../src/db/models/index').sequelize;
 const Topic = require("../../src/db/models").Topic;
+const User = require("../../src/db/models").User;
 
 describe("routes : topics", () => {
 
   beforeEach((done) => { // before each context
+    this.user;
     this.topic;   // define variables and bind to context
+
     sequelize.sync({ force: true }).then(() => {  // clear database
-      Topic.create({
-        title: "JS Frameworks",
-        description: "There is a lot of them"
+      User.create({
+        email: "starman@tesla.com",
+        password: "Trekkie4lyfe"
       })
-      .then((res) => {
-        this.topic = res;  // store resulting topic in context
-        done();
-      })
-      .catch((err) => {
-        console.log(err);
-        done();
-      })
+      .then((user) => {
+        this.user = user;
+
+        Topic.create({
+          title: "JS Frameworks",
+          description: "There is a lot of them"
+        })
+        .then((topic) => {
+          this.topic = topic;  // store resulting topic in context
+          done();
+        })
+        .catch((err) => {
+          console.log(err);
+          done();
+        })
+      });
     });
   });
+
 
   // context of admin user
   describe("admin user performing CRUD actions for Topic", () => {
@@ -32,10 +44,8 @@ describe("routes : topics", () => {
       request.get({         // mock authentication
         url: "http://localhost:3000/auth/fake",
         form: {
-          email: "kwena@mokgohlwa.com"
-          password: "1234567"
-          role: "admin"
-          userId: "1"    // mock authenticate as admin user
+          role: "admin",
+          userId: this.user.id    // mock authenticate as admin user
         }
       });
       done();
@@ -173,10 +183,8 @@ describe("routes : topics", () => {
       request.get({
         url: "http://localhost:3000/auth/fake",
         form: {
-          email: "kwena@mokgohlwa.com"
-          password: "1234567"
-          role: "member"
-          userId: "1"    // mock authenticate as member user
+          role: "member",
+          userId: this.user.id    // mock authenticate as member user
         }
       });
       done();
@@ -310,7 +318,7 @@ describe("routes : topics", () => {
       });
 
     });
-
-  });
+  
+  }); //end of member context
 
 });

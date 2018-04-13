@@ -65,7 +65,6 @@ describe("routes : comments", () => {
     });
   });
 
-  //test suites will go there
   describe("guest attempting to perform CRUD actions for Comment", () => {
 
     beforeEach((done) => {    // before each suite in this context
@@ -124,10 +123,9 @@ describe("routes : comments", () => {
               expect(err).toBeNull();
               expect(comments.length).toBe(commentCountBeforeDelete);
               done();
-            })
-
+            });
           });
-        })
+        });
       });
     });
 
