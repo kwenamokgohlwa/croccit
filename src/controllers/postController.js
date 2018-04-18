@@ -36,10 +36,6 @@ module.exports = {
     }
   },
 
-
-
-
-
   show(req, res, next){
     postQueries.getPost(req.params.id, (err, post) => {
       if(err || post == null){
@@ -50,9 +46,6 @@ module.exports = {
     });
   },
 
-
-
-
   destroy(req, res, next){
     postQueries.deletePost(req, (err, deletedRecordsCount) => {
       if(err){
@@ -62,9 +55,6 @@ module.exports = {
       }
     });
   },
-
-
-
 
   edit(req, res, next){
     postQueries.getPost(req.params.id, (err, post) => {
@@ -82,10 +72,6 @@ module.exports = {
       }
     });
   },
-
-
-
-
 
   update(req, res, next){
     postQueries.updatePost(req, req.body, (err, post) => {

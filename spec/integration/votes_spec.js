@@ -29,25 +29,34 @@ describe("routes : votes", () => {
         Topic.create({
           title: "Expeditions to Alpha Centauri",
           description: "A compilation of reports from recent visits to the star system.",
-          posts: [{
-            title: "My first visit to Proxima Centauri b",
-            body: "I saw some rocks.",
-            userId: this.user.id
-          }]
-        }, {
-          include: {
-            model: Post,
-            as: "posts"
-          }
         })
         .then((res) => {
           this.topic = res;
-          this.post = this.topic.posts[0];
-          done();
-        })
-        .catch((err) => {
-          console.log(err);
-          done();
+
+          Post.create({
+            title: "My first visit to Proxima Centauri b",
+            body: "I saw some rocks.",
+            userId: this.user.id,
+            topicId: this.topic.id,
+            votes: [{
+              value: 1,
+              userId: this.user.id,
+            }]
+          }, {
+            include: {
+              model: Vote,
+              as: "votes"
+            }
+          })
+          .then((res) => {
+            this.post = res;
+            this.vote = this.post.votes[0];
+            done();
+          })
+          .catch((err) => {
+            console.log(err);
+            done();
+          });
         });
       });
     });
@@ -76,11 +85,12 @@ describe("routes : votes", () => {
         const options = {
           url: `${base}${this.topic.id}/posts/${this.post.id}/votes/upvote`
         };
+        let valueBeforeAttemptNew = this.vote.value;
         request.get(options,
           (err, res, body) => {
             Vote.findOne({            // look for the vote, should not find one.
               where: {
-                userId: this.user.id,
+                userId: 0,
                 postId: this.post.id
               }
             })
@@ -145,6 +155,76 @@ describe("routes : votes", () => {
           }
         );
       });
+
+      it("should not create an upvote greater than 1", (done) => {
+        const options = {
+          url: `${base}${this.topic.id}/posts/${this.post.id}/votes/upvote`,
+          value: 2
+        };
+        request.get(options,
+          (err, res, body) => {
+            Vote.findOne({
+              where: {
+                value: 2,
+                userId: this.user.id,
+                postId: this.post.id
+              }
+            })
+            .then((vote) => {               // confirm that an upvote was created
+              expect(vote).toBeNull();
+              done();
+            })
+            .catch((err) => {
+              console.log(err);
+              done();
+            });
+          }
+        );
+      });
+
+      it("should not create more than 1 vote per user", (done) => {
+        const options = {
+          url: `${base}${this.topic.id}/posts/${this.post.id}/votes/upvote`,
+        };
+        request.get(options,
+          (err, res, body) => {
+            Vote.findOne({
+              where: {
+                userId: this.user.id,
+                postId: this.post.id
+              }
+            })
+            .then((vote) => {     // confirm that a upvote was created
+              expect(vote).not.toBeNull();
+              expect(vote.value).toBe(1);
+              expect(vote.userId).toBe(this.user.id);
+              expect(vote.postId).toBe(this.post.id);
+            })
+            .then(() => {
+              request.get(options, (err, res, body) => {
+                Vote.findOne({
+                  where: {
+                    userId: this.user.id,
+                    postId: this.post.id
+                  }
+                })
+                .then((vote) => {     // confirm that a upvote was created
+                  expect(vote).not.toBeNull();
+                  expect(vote.value).toBe(1);  // vote value stays the same
+                  expect(vote.userId).toBe(this.user.id);
+                  expect(vote.postId).toBe(this.post.id);
+                  done();
+                })
+                .catch((err) => {
+                  console.log(err);
+                  done();
+                });
+              });
+            });
+          }
+        );
+      });
+
     });
 
     describe("GET /topics/:topicId/posts/:postId/votes/downvote", () => {
@@ -175,10 +255,127 @@ describe("routes : votes", () => {
           }
         );
       });
+
+      it("should not create an upvote greater than 1", (done) => {
+        const options = {
+          url: `${base}${this.topic.id}/posts/${this.post.id}/votes/downvote`,
+          value: -2
+        };
+        request.get(options,
+          (err, res, body) => {
+            Vote.findOne({
+              where: {
+                value: -2,
+                userId: this.user.id,
+                postId: this.post.id
+              }
+            })
+            .then((vote) => {               // confirm that a downvote was created
+              expect(vote).toBeNull();
+              done();
+            })
+            .catch((err) => {
+              console.log(err);
+              done();
+            });
+          }
+        );
+      });
+
+      it("should not create more than 1 downvote per user", (done) => {
+        const options = {
+          url: `${base}${this.topic.id}/posts/${this.post.id}/votes/downvote`,
+        };
+        request.get(options,
+          (err, res, body) => {
+            Vote.findOne({
+              where: {
+                userId: this.user.id,
+                postId: this.post.id
+              }
+            })
+            .then((vote) => {     // confirm that a downvote was created
+              expect(vote).not.toBeNull();
+              expect(vote.value).toBe(-1);
+              expect(vote.userId).toBe(this.user.id);
+              expect(vote.postId).toBe(this.post.id);
+            })
+            .then(() => {
+              request.get(options, (err, res, body) => {
+                Vote.findOne({
+                  where: {
+                    userId: this.user.id,
+                    postId: this.post.id
+                  }
+                })
+                .then((vote) => {     // confirm that a downvote was created
+                  expect(vote).not.toBeNull();
+                  expect(vote.value).toBe(-1);  // vote value stays the same
+                  expect(vote.userId).toBe(this.user.id);
+                  expect(vote.postId).toBe(this.post.id);
+                  done();
+                })
+                .catch((err) => {
+                  console.log(err);
+                  done();
+                });
+              });
+            });
+          }
+        );
+      });
+
+    });
+
+    describe("#getPoints()", () => {
+
+      it("should get vote points", (done) => {
+        const options = {
+          url: `${base}${this.topic.id}/posts/${this.post.id}/votes/upvote`,
+        };
+        request.get(options,
+          (err, res, body) => {
+              expect(this.post.getPoints()).toBe(1); //calculates vote points
+              done();
+            })
+          });
+
+    });
+
+    describe("#hasUpvoteFor()", () => {
+
+      it("return true if user with matching userId has an upvote for the post", (done) => {
+        const options = {
+          url: `${base}${this.topic.id}/posts/${this.post.id}/votes/upvote`,
+        };
+        request.get(options,
+          (err, res, body) => {
+            expect(this.post.hasUpvoteFor(this.user.id)).toBeTruthy(); //checks whether user has an upvote for post
+            done();
+          }
+        );
+      });
+
+    });
+
+    describe("#hasDownvoteFor()", () => {
+
+      it("return false if user with matching userId has does not have downvote", (done) => {
+        const options = {
+          url: `${base}${this.topic.id}/posts/${this.post.id}/votes/upvote`,
+        };
+        request.get(options,
+          (err, res, body) => {
+            expect(this.post.hasDownvoteFor(this.vote.userId)).not.toBeTruthy(); //checks whether the user has a downvote for post
+            done();
+          }
+        );
+      });
+
     });
 
   }); //end context for signed in user
 
-  
+
 
 });

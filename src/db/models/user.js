@@ -40,5 +40,6 @@ module.exports = (sequelize, DataTypes) => {
     return this.role === "admin";
   };
 
+
   return User;
 };

@@ -75,7 +75,6 @@ describe("Vote", () => {
         expect(vote.postId).toBe(this.post.id);
         expect(vote.userId).toBe(this.user.id);
         done();
-
       })
       .catch((err) => {
         console.log(err);
