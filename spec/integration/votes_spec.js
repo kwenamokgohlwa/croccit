@@ -12,8 +12,8 @@ const Vote = require("../../src/db/models").Vote;
 describe("routes : votes", () => {
 
   beforeEach((done) => {
-
     this.user;
+    this.user2;
     this.topic;
     this.post;
     this.vote;
@@ -29,34 +29,25 @@ describe("routes : votes", () => {
         Topic.create({
           title: "Expeditions to Alpha Centauri",
           description: "A compilation of reports from recent visits to the star system.",
+          posts: [{
+            title: "My first visit to Proxima Centauri b",
+            body: "I saw some rocks.",
+            userId: this.user.id
+          }]
+        }, {
+          include: {
+            model: Post,
+            as: "posts"
+          }
         })
         .then((res) => {
           this.topic = res;
-
-          Post.create({
-            title: "My first visit to Proxima Centauri b",
-            body: "I saw some rocks.",
-            userId: this.user.id,
-            topicId: this.topic.id,
-            votes: [{
-              value: 1,
-              userId: this.user.id,
-            }]
-          }, {
-            include: {
-              model: Vote,
-              as: "votes"
-            }
-          })
-          .then((res) => {
-            this.post = res;
-            this.vote = this.post.votes[0];
-            done();
-          })
-          .catch((err) => {
-            console.log(err);
-            done();
-          });
+          this.post = this.topic.posts[0];
+          done();
+        })
+        .catch((err) => {
+          console.log(err);
+          done();
         });
       });
     });
@@ -85,12 +76,11 @@ describe("routes : votes", () => {
         const options = {
           url: `${base}${this.topic.id}/posts/${this.post.id}/votes/upvote`
         };
-        let valueBeforeAttemptNew = this.vote.value;
         request.get(options,
           (err, res, body) => {
             Vote.findOne({            // look for the vote, should not find one.
               where: {
-                userId: 0,
+                userId: 0, // upvote already created in hook so this checks whether user 0 has created anything
                 postId: this.post.id
               }
             })
@@ -107,6 +97,7 @@ describe("routes : votes", () => {
       });
 
     });
+
   });
 
 //Members
@@ -182,7 +173,7 @@ describe("routes : votes", () => {
         );
       });
 
-      it("should not create more than 1 vote per user", (done) => {
+      it("should not create more than 1 upvote per user", (done) => {
         const options = {
           url: `${base}${this.topic.id}/posts/${this.post.id}/votes/upvote`,
         };
@@ -256,7 +247,7 @@ describe("routes : votes", () => {
         );
       });
 
-      it("should not create an upvote greater than 1", (done) => {
+      it("should not create an downvote less than than -1", (done) => {
         const options = {
           url: `${base}${this.topic.id}/posts/${this.post.id}/votes/downvote`,
           value: -2
@@ -335,10 +326,18 @@ describe("routes : votes", () => {
         };
         request.get(options,
           (err, res, body) => {
-              expect(this.post.getPoints()).toBe(1); //calculates vote points
+            this.post.getVotes()
+            .then((votes) => {
+              expect(votes[0].value).toBe(1)
+              expect(this.post.getPoints()).toBe(1);
               done();
             })
+            .catch((err) => {
+              console.log(err);
+              done();
+            });
           });
+        });
 
     });
 
@@ -350,8 +349,16 @@ describe("routes : votes", () => {
         };
         request.get(options,
           (err, res, body) => {
-            expect(this.post.hasUpvoteFor(this.user.id)).toBeTruthy(); //checks whether user has an upvote for post
-            done();
+            this.post.getVotes() // test to see if post has votes
+            .then((votes) => {
+              expect(votes[0].value).toBe(1);
+              expect(this.post.hasUpvoteFor(this.user.id)).toBeTruthy();
+              done();
+            })
+            .catch((err) => {
+              console.log(err);
+              done();
+            });
           }
         );
       });
@@ -360,14 +367,22 @@ describe("routes : votes", () => {
 
     describe("#hasDownvoteFor()", () => {
 
-      it("return false if user with matching userId has does not have downvote", (done) => {
+      it("return true if user with matching userId has an downvote for the post", (done) => {
         const options = {
-          url: `${base}${this.topic.id}/posts/${this.post.id}/votes/upvote`,
+          url: `${base}${this.topic.id}/posts/${this.post.id}/votes/downvote`,
         };
         request.get(options,
           (err, res, body) => {
-            expect(this.post.hasDownvoteFor(this.vote.userId)).not.toBeTruthy(); //checks whether the user has a downvote for post
-            done();
+            this.post.getVotes() // test to see if post has votes
+            .then((votes) => {
+              expect(votes[0].value).toBe(-1);
+              expect(this.post.hasDownvoteFor(this.user.id)).toBeTruthy();
+              done();
+            })
+            .catch((err) => {
+              console.log(err);
+              done();
+            });
           }
         );
       });
